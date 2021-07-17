@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>省市县三级联动</title>
+    <style type="text/css">
+        #container {
+            width: 600px;
+            margin: 0 auto;
+            background-color: darkseagreen;
+            text-align: center;
+        }
+
+        #region label {
+            margin-right: 6px;
+        }
+
+        #region select {
+            height: 30px;
+            background-color: darkseagreen;
+        }
+
+        #addr {
+            height: 38px;
+            margin:5px auto;
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js"></script>
+    <script>
+
+        $(document).ready(function () {
+            $.ajax({
+                url: "region_action.php",
+                type: "get",
+                dataType: "json", // 注意“T"大写，js一般是驼峰式风格
+                data: { "region_type": 1, "parent_id": 1 },
+                success: function (data) {
+                    data.forEach(function (item) {
+                        $("#province").append("<option value='" + item[0] + "'>" + item[1] + "</option>")
+                    })
+                    $("#province").trigger('change') // 触发 #province的 change事件 
+                }
+            })
+            // 该 绑定事件函数只能在 DOM 后 才能生效, 所以绑定事件一定要是 $().ready()内，或者写在 dom后边 
+            $("#province").change(function () {
+                $.ajax({
+                    url: "region_action.php",
+                    dataType: "json",
+                    data: { "region_type": 2, "parent_id": $(this).val() }, // type=2 代表市
+                    type: "get",
+                    success: function (data) {
+                        $("#city").empty();
+                        data.forEach(function (item) {
+                            $("#city").append("<option value='" + item[0] + "'>" + item[1] + "</option>")
+                        })
+                        $("#city").trigger('change')// 触发 #city 的 change事件
+                    }
+                })
+            })
+            $("#city").change(function () {
+                $.ajax({
+                    url: "region_action.php",
+                    dataType: "json",
+                    data: { "region_type": 3, "parent_id": $(this).val() }, // type=3 代表县
+                    type: "get",
+                    success: function (data) {
+                        $("#county").empty()
+                        data.forEach(function (item) {
+                            $("#county").append("<option value='" + item[0] + "'>" + item[1] + "</option>")
+                        })
+                        $("#county").trigger('change')
+                    }
+                })
+            })
+
+            $("#county").change(function () {
+                // 后边显示完整的地址  
+                var addr_province = $("#province option:selected").text()
+                var addr_city = $("#city option:selected").text()
+                var addr_county = $("#county option:selected").text()
+                if (addr_city == addr_province) { // 省市同名的 直辖市 拿出来
+                    addr = addr_city + addr_county  //香港 澳门一般不说市
+                } else {
+                    addr = addr_province + "省" + addr_city + "市" + addr_county
+                }
+                $("#addr").empty()
+                $("#addr").append("您选择的地址是：<input type='text' name='addr' value='" + addr + "'>")
+            })
+        })
+
+    </script>
+</head>
+
+<body>
+    <div id="container">
+        <h2>省市县三级联动</h2>
+        <div id="region">
+            <strong>请选择您的地址:</strong>
+            <select name="province" id="province" style="width:100px" title="请选择省"></select>
+            <label for="province">省</label>
+            <select name="city" id="city" style="width:150px" title="请选择市">
+            </select><label for="city">市</label>
+            <select name="county" id="county" style="width:150px" title="请选择县">
+            </select><label for="county">县</label>
+        </div>
+        <div id="addr">
+
+        </div>
+
+    </div>
+    <script>
+
+    </script>
+</body>
+
+</html>
